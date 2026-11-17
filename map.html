@@ -8,7 +8,7 @@
 <style>
 :root{
   --bg:#f5f6f3; --surface:#ffffff; --fg:#17191a; --muted:#5d6461; --line:#d9ddd8;
-  --passer:#7a8288; --rester:#2f6fb3; --inter:#d0542b; --part:#2f8a4e; --sel:#17191a; --alert:#c43c2f;
+  --passer:#7a8288; --rester:#2f6fb3; --inter:#d0542b; --part:#2f8a4e; --sel:#17191a; --alert:#c43c2f; --pair:#d0542b;
   --f:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root{
@@ -17,14 +17,32 @@
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;display:flex;flex-direction:column;overflow:hidden}
 [hidden]{display:none!important}
-.top{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--line);
+.top{display:flex;flex-direction:column;gap:6px;background:var(--surface);border-bottom:1px solid var(--line);
   padding:calc(6px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px))}
-.top select{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);color:var(--fg);max-width:58vw}
-.cnt{font-weight:700;font-variant-numeric:tabular-nums}
-.gps{font-size:12px;color:var(--muted)}
-.top .sp{flex:1}
-.ib{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);color:var(--fg)}
-#map{flex:1;min-height:0}
+.tr{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;min-width:0}
+.top select{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);color:var(--fg);min-width:0;flex:1}
+.cnt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gps{font-size:12px;color:var(--muted);white-space:nowrap;margin-left:auto}
+.ib{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 9px;background:var(--bg);color:var(--fg);white-space:nowrap}
+.ib[aria-pressed="true"]{background:var(--pair);border-color:var(--pair);color:#fff}
+.ib.cn[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.ib .badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:var(--rester);color:#fff;font-size:11px;margin-left:3px}
+.mapwrap{flex:1;min-height:0;position:relative}
+#map{position:absolute;inset:0}
+.counter{position:absolute;top:8px;left:8px;right:56px;z-index:900;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 4px 14px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:6px}
+.ctop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tt{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;min-width:4.2ch}
+.tt.end{color:var(--alert)}
+.cgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.cb{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:9px;padding:8px 2px;display:flex;flex-direction:column;align-items:center;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.cb .n{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.cb .l{font-size:11px;color:var(--muted)}
+.cb:active{transform:scale(.96)}
+.cfoot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.mini{font:inherit;font-size:12px;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:6px;padding:3px 7px}
+.mini[aria-pressed="true"]{background:var(--alert);border-color:var(--alert);color:#fff}
+.banner{position:absolute;left:8px;right:8px;bottom:8px;z-index:900;background:var(--pair);color:#fff;border-radius:10px;padding:8px 10px;font-weight:700;display:flex;align-items:center;gap:8px}
+.banner button{margin-left:auto;font:inherit;font-size:12px;background:#fff;color:var(--pair);border:0;border-radius:6px;padding:4px 8px}
 .sheet{background:var(--surface);border-top:1px solid var(--line);
   padding:6px max(10px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:5px}
 .r{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:center}
@@ -38,70 +56,123 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;di
 .chip.p-part[aria-pressed="true"]{background:var(--part);border-color:var(--part);color:#fff}
 .hint{font-size:12px;color:var(--muted)}
 .actions{display:flex;gap:6px;align-items:center}
-.btn{font:inherit;font-weight:700;border-radius:8px;padding:7px 12px;border:1px solid var(--fg);background:var(--fg);color:var(--bg)}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:8px 12px;border:1px solid var(--fg);background:var(--fg);color:var(--bg);text-decoration:none;display:inline-block}
 .btn.g{background:transparent;color:var(--fg);border-color:var(--line)}
-.menu{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;align-items:flex-end}
-.menu .pane{background:var(--surface);color:var(--fg);width:100%;border-radius:14px 14px 0 0;
-  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow:auto}
-.menu h3{margin:0;font-size:16px}
-.menu .row{display:flex;gap:8px;flex-wrap:wrap}
-.menu textarea{width:100%;min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;align-items:flex-end}
+.modal .pane{background:var(--surface);color:var(--fg);width:100%;border-radius:14px 14px 0 0;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;max-height:88vh;overflow:auto}
+.modal h3{margin:0;font-size:16px}
+.modal .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.modal label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}
+.modal input,.modal select,.modal textarea{font:inherit;font-size:16px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--fg);width:100%}
+.modal textarea{min-height:60px}
+#jsonArea{font-family:ui-monospace,Menlo,monospace;font-size:11px;min-height:110px}
 .msg{font-size:13px;color:var(--muted)}
 .danger{border-color:var(--alert);color:var(--alert);background:transparent}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
 .dot{border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
-.leaflet-popup-content{font-family:var(--f);font-size:13px;margin:10px 12px}
-.leaflet-popup-content button{font:inherit;font-size:12px;margin-top:6px;border:1px solid var(--alert);color:var(--alert);background:#fff;border-radius:6px;padding:4px 8px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:6px 12px;border-radius:999px;font-size:13px;z-index:1500;pointer-events:none;opacity:0;transition:opacity .2s}
+.dot.run{box-shadow:0 0 0 3px #f2b400,0 0 0 4px rgba(0,0,0,.35)}
+.leaflet-popup-content{font-family:var(--f);font-size:13px;margin:10px 12px;min-width:190px}
+.pp{display:flex;flex-direction:column;gap:6px}
+.pp input{font:inherit;font-size:16px;border:1px solid #ccc;border-radius:6px;padding:5px 6px;width:100%}
+.pp .b{display:flex;gap:6px;flex-wrap:wrap}
+.pp button{font:inherit;font-size:13px;border:1px solid #17191a;background:#17191a;color:#fff;border-radius:6px;padding:5px 9px}
+.pp button.x{border-color:#c43c2f;color:#c43c2f;background:#fff}
+.pp button.g{background:#fff;color:#17191a;border-color:#ccc}
+.rep{display:inline-block;background:#d0542b;color:#fff;border-radius:4px;padding:0 5px;font-size:11px;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(170px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:6px 12px;border-radius:999px;font-size:13px;z-index:1500;pointer-events:none;opacity:0;transition:opacity .2s}
 .toast.on{opacity:.92}
 </style>
 </head>
 <body>
 <div class="top">
-  <select id="sess" aria-label="회차"></select>
-  <span class="cnt" id="cnt">0점</span>
-  <span class="sp"></span>
-  <span class="gps" id="gps">위치 찾는 중</span>
-  <button class="ib" id="locBtn" type="button">◎ 내 위치</button>
-  <button class="ib" id="menuBtn" type="button">≡</button>
+  <div class="tr">
+    <select id="sess" aria-label="회차"></select>
+    <button class="ib" id="infoBtn" type="button">회차 정보</button>
+    <span class="cnt" id="cnt">0점</span>
+  </div>
+  <div class="tr">
+    <button class="ib" id="locBtn" type="button">◎ 위치</button>
+    <button class="ib cn" id="cntBtn" type="button" aria-pressed="false">세기</button>
+    <button class="ib" id="pairBtn" type="button" aria-pressed="false">인사 쌍</button>
+    <span class="gps" id="gps">위치 찾는 중</span>
+    <button class="ib" id="menuBtn" type="button">≡</button>
+  </div>
 </div>
-<div id="map"></div>
+<div class="mapwrap">
+  <div id="map"></div>
+  <div class="counter" id="counter" hidden>
+    <div class="ctop"><span class="tt" id="tt">10:00</span><button class="btn" id="tStart" type="button">시작</button><button class="btn g" id="tReset" type="button">다시</button><span class="msg">지나가는 사람 · 선을 넘을 때</span></div>
+    <div class="cgrid" id="cgrid"></div>
+    <div class="cfoot"><span>합계 <b id="csum">0</b>명</span><button class="mini" id="minusMode" type="button" aria-pressed="false">빼기 모드</button></div>
+  </div>
+  <div class="banner" id="banner" hidden><span id="bannerTxt">첫 번째 사람 위치를 누르세요</span><button type="button" id="pairCancel">취소</button></div>
+</div>
 <div class="sheet">
   <div class="r" id="rProf"></div>
   <div class="r" id="rA"></div>
   <div class="r" id="rB"></div>
   <div class="r" id="rC"></div>
-  <div class="actions"><span class="hint" id="hint">종류를 고르고 지도를 누르면 점이 찍힙니다</span><span style="flex:1"></span><button class="btn g" id="undo" type="button">되돌리기</button></div>
+  <div class="actions"><span class="hint" id="hint">종류를 고르고 지도를 누르면 점이 찍힙니다 · 점을 누르면 역할 메모와 머문 시간</span><span style="flex:1"></span><button class="btn g" id="undo" type="button">되돌리기</button></div>
 </div>
 <div class="toast" id="toast"></div>
+<datalist id="roles"></datalist>
 
-<div class="menu" id="menu" hidden>
-  <div class="pane">
-    <h3>내보내기 · 설정</h3>
-    <div class="msg" id="sumTxt"></div>
-    <div class="row">
-      <button class="btn" id="shareCsv" type="button">CSV 공유/저장</button>
-      <button class="btn g" id="shareGeo" type="button">GeoJSON 공유/저장</button>
-      <button class="btn g" id="copyJson" type="button">글자로 복사</button>
-    </div>
-    <textarea id="jsonArea" readonly hidden></textarea>
-    <div class="row">
-      <button class="btn g" id="layerBtn" type="button">배경: 지도 ↔ 항공사진</button>
-      <a class="btn g" href="./" style="text-decoration:none">← 동선 페이지</a>
-    </div>
-    <div class="row"><button class="btn danger" id="clearBtn" type="button">이 회차 점 모두 지우기</button><span class="msg" id="clearMsg"></span></div>
-    <button class="btn g" id="closeMenu" type="button">닫기</button>
+<!-- pair modal -->
+<div class="modal" id="pairModal" hidden><div class="pane">
+  <h3>인사 쌍 기록</h3>
+  <div class="msg">사람은 이름이나 얼굴이 아니라 <b>역할과 자리</b>로만 적습니다. 예: 3번 진열대 상인, 정문 왼쪽 부모(빨간 유모차)</div>
+  <div class="row"><label>첫 번째 사람<input id="roleA" list="roles" autocomplete="off" placeholder="역할 · 자리"></label></div>
+  <div class="row"><label>두 번째 사람<input id="roleB" list="roles" autocomplete="off" placeholder="역할 · 자리"></label></div>
+  <div class="row" id="pairKind"></div>
+  <div class="msg" id="pairRep"></div>
+  <div class="row"><button class="btn" id="pairSave" type="button">저장</button><button class="btn g" id="pairDiscard" type="button">취소</button></div>
+</div></div>
+
+<!-- session info modal -->
+<div class="modal" id="infoModal" hidden><div class="pane">
+  <h3 id="infoTitle">회차 정보</h3>
+  <div class="row"><label>날씨 · 기온<input id="mWeather" placeholder="맑음 8°C"></label></div>
+  <div class="row"><label>특별한 일 (시장, 하교, 공사, 행사)<textarea id="mEvent"></textarea></label></div>
+  <div class="row"><label>실제 시작<input id="mStart" type="time"></label><label>실제 끝<input id="mEnd" type="time"></label></div>
+  <div class="msg" id="infoSum"></div>
+  <div class="row"><button class="btn" id="infoSave" type="button">저장</button><button class="btn g" id="infoClose" type="button">닫기</button></div>
+  <hr style="border:0;border-top:1px solid var(--line);width:100%">
+  <h3>새 회차 만들기</h3>
+  <div class="row"><label>날짜<input id="nDate" type="date"></label><label>시작<input id="nTime" type="time"></label></div>
+  <div class="row"><label>거리<select id="nStreet"><option>Castelar</option><option>Aligre</option><option>Traversière</option></select></label><label>조건<input id="nCond" placeholder="학교 없음, 시장 없음…"></label></div>
+  <div class="row"><button class="btn" id="newSess" type="button">새 회차 추가</button><span class="msg" id="newMsg"></span></div>
+</div></div>
+
+<!-- menu -->
+<div class="modal" id="menu" hidden><div class="pane">
+  <h3>내보내기 · 설정</h3>
+  <div class="legend"><span><i style="background:#7a8288"></i>지나감</span><span><i style="background:#2f6fb3"></i>머묾</span><span><i style="background:#d0542b"></i>상호작용·인사 쌍</span><span><i style="background:#2f8a4e"></i>참여</span><span><i style="background:#f2b400"></i>시간 재는 중</span></div>
+  <div class="msg" id="sumTxt"></div>
+  <div class="row">
+    <button class="btn" id="shareCsv" type="button">CSV 3개 공유/저장</button>
+    <button class="btn g" id="shareGeo" type="button">GeoJSON</button>
+    <button class="btn g" id="copyJson" type="button">글자로 복사</button>
   </div>
-</div>
+  <textarea id="jsonArea" readonly hidden></textarea>
+  <div class="row">
+    <button class="btn g" id="layerBtn" type="button">배경: 지도 ↔ 항공사진</button>
+    <a class="btn g" href="./">← 동선 페이지</a>
+  </div>
+  <div class="row"><button class="btn danger" id="clearBtn" type="button">이 회차 기록 모두 지우기</button><span class="msg" id="clearMsg"></span></div>
+  <button class="btn g" id="closeMenu" type="button">닫기</button>
+</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const SESS=[
- {id:"c1",t:"08:10",e:"08:40",street:"Castelar",label:"08:10 Castelar 등교"},
- {id:"a1",t:"08:50",e:"09:20",street:"Aligre",label:"08:50 Aligre 시장"},
- {id:"t1",t:"09:30",e:"10:00",street:"Traversière",label:"09:30 Traversière 오전"},
- {id:"c2",t:"11:20",e:"11:50",street:"Castelar",label:"11:20 Castelar 하교"},
- {id:"t2",t:"12:00",e:"12:30",street:"Traversière",label:"12:00 Traversière 점심"},
- {id:"x",t:"00:00",e:"00:00",street:"기타",label:"기타 회차"}
+/* ---------- data ---------- */
+const DEF_SESS=[
+ {id:"c1",date:"2026-11-18",t:"08:10",e:"08:40",street:"Castelar",label:"11/18 08:10 Castelar 등교"},
+ {id:"a1",date:"2026-11-18",t:"08:50",e:"09:20",street:"Aligre",label:"11/18 08:50 Aligre 시장"},
+ {id:"t1",date:"2026-11-18",t:"09:30",e:"10:00",street:"Traversière",label:"11/18 09:30 Traversière 오전"},
+ {id:"c2",date:"2026-11-18",t:"11:20",e:"11:50",street:"Castelar",label:"11/18 11:20 Castelar 하교"},
+ {id:"t2",date:"2026-11-18",t:"12:00",e:"12:30",street:"Traversière",label:"11/18 12:00 Traversière 점심"}
 ];
 const PROF=[{k:"passer",l:"지나감",c:"p-passer"},{k:"rester",l:"머묾",c:"p-rester"},{k:"interagir",l:"상호작용",c:"p-inter"},{k:"participer",l:"참여",c:"p-part"}];
 const OPT={
@@ -110,31 +181,41 @@ const OPT={
   inter:{l:"종류",v:["인사만","짧은 대화","긴 대화","같이 놀기"]},
   age:{l:"나이",v:["0-14","15-24","25-64","65+"]},
   gen:{l:"성별",v:["여","남","?"]},
-  act:{l:"활동",v:["대화","기다림","먹고 마심","놀이","구경","상거래","기타"]},
   part:{l:"종류",v:["꾸미기","행사","정리·관리","기타"]}
 };
 const ROWS={passer:["mode","age"],rester:["post","age","gen"],interagir:["inter","age","gen"],participer:["part","age"]};
 const COLOR={passer:"#7a8288",rester:"#2f6fb3",interagir:"#d0542b",participer:"#2f8a4e"};
+const MODES=OPT.mode.v;
 const KEY="terrain-map-18-11";
-let pts=[]; try{pts=JSON.parse(localStorage.getItem(KEY)||"[]")||[];}catch(e){pts=[]}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pts));}catch(e){toast("저장 실패: 브라우저 저장소를 쓸 수 없습니다")}};
-let sel={prof:"rester",mode:"도보",post:"서기",inter:"인사만",age:"25-64",gen:"?",act:null,part:"꾸미기"};
-try{const s=JSON.parse(localStorage.getItem(KEY+"-sel")||"null"); if(s) sel={...sel,...s};}catch(e){}
-const saveSel=()=>{try{localStorage.setItem(KEY+"-sel",JSON.stringify(sel));}catch(e){}};
+function load(k,d){try{const v=JSON.parse(localStorage.getItem(k)||"null");return v==null?d:v}catch(e){return d}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast("저장 실패: 브라우저 저장소를 쓸 수 없습니다");return false}}
+let pts=load(KEY,[]), pairs=load(KEY+"-pairs",[]), sessions=load(KEY+"-sessions",null)||DEF_SESS.slice(), meta=load(KEY+"-meta",{});
+let sel={prof:"rester",mode:"도보",post:"서기",inter:"인사만",age:"25-64",gen:"?",part:"꾸미기",...load(KEY+"-sel",{})};
+const savePts=()=>store(KEY,pts), savePairs=()=>store(KEY+"-pairs",pairs), saveSess=()=>store(KEY+"-sessions",sessions), saveMeta=()=>store(KEY+"-meta",meta), saveSel=()=>store(KEY+"-sel",sel);
 const $=id=>document.getElementById(id);
-function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove("on"),1300)}
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove("on"),1400)}
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s||"").trim().toLowerCase().replace(/\s+/g," ");
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const hm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+const curSess=()=>sessions.find(s=>s.id===$("sess").value)||sessions[0];
+const M=id=>(meta[id]=meta[id]||{count:{},weather:"",event:"",start:"",end:""});
 
-/* session select, auto by clock */
-const sessEl=$("sess");
-SESS.forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.label;sessEl.appendChild(o)});
-const mins=s=>{const [h,m]=s.split(":").map(Number);return h*60+m};
-(function pick(){let id=null;try{id=localStorage.getItem(KEY+"-sess")}catch(e){}
-  const d=new Date(),m=d.getHours()*60+d.getMinutes();
-  const now=SESS.find(s=>s.id!=="x"&&m>=mins(s.t)-10&&m<mins(s.e)+5);
-  sessEl.value=now?now.id:(id||"c1");})();
-sessEl.addEventListener("change",()=>{try{localStorage.setItem(KEY+"-sess",sessEl.value)}catch(e){};redraw();});
+/* ---------- sessions ---------- */
+const mins=s=>{const [h,m]=(s||"0:0").split(":").map(Number);return h*60+m};
+function fillSess(keep){
+  const el=$("sess"); el.innerHTML="";
+  sessions.slice().sort((a,b)=>(a.date+a.t).localeCompare(b.date+b.t)).forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.label;el.appendChild(o)});
+  if(keep&&sessions.some(s=>s.id===keep)){el.value=keep;return}
+  const d=new Date(),m=d.getHours()*60+d.getMinutes(),td=today();
+  const now=sessions.find(s=>s.date===td&&m>=mins(s.t)-10&&m<(s.e?mins(s.e):mins(s.t)+30)+5);
+  el.value=now?now.id:(load(KEY+"-cur",null)||sessions[0].id);
+}
+fillSess();
+$("sess").addEventListener("change",()=>{store(KEY+"-cur",$("sess").value);redraw();renderCounter();});
 
-/* chips */
+/* ---------- chips ---------- */
 function chipRow(el,key){
   el.innerHTML=`<span class="lab">${OPT[key].l}</span>`+OPT[key].v.map(v=>`<button type="button" class="chip" data-k="${key}" data-v="${v}" aria-pressed="${sel[key]===v}">${v}</button>`).join("");
 }
@@ -144,89 +225,207 @@ function renderChips(){
   [$("rA"),$("rB"),$("rC")].forEach((el,i)=>{ if(rows[i]){el.hidden=false;chipRow(el,rows[i]);} else el.hidden=true; });
 }
 document.querySelector(".sheet").addEventListener("click",e=>{
-  const b=e.target.closest(".chip"); if(!b) return;
-  const k=b.dataset.k,v=b.dataset.v;
-  sel[k]=(k!=="prof"&&k==="act"&&sel[k]===v)?null:v; saveSel(); renderChips();
+  const b=e.target.closest(".chip"); if(!b) return; sel[b.dataset.k]=b.dataset.v; saveSel(); renderChips();
 });
 renderChips();
 
-/* map */
-const map=L.map("map",{zoomControl:false,maxZoom:22,tap:true}).setView([48.8487,2.3772],17);
+/* ---------- map ---------- */
+const map=L.map("map",{zoomControl:false,maxZoom:22}).setView([48.8487,2.3772],17);
 L.control.zoom({position:"topright"}).addTo(map);
 const osm=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxNativeZoom:19,maxZoom:22,attribution:"© OpenStreetMap"});
 const ortho=L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",{maxNativeZoom:20,maxZoom:22,attribution:"© IGN Géoplateforme"});
-osm.addTo(map); let base="osm";
-$("layerBtn").onclick=()=>{ if(base==="osm"){map.removeLayer(osm);ortho.addTo(map);base="ortho";} else {map.removeLayer(ortho);osm.addTo(map);base="osm";} };
-
+let base=load(KEY+"-base","osm"); (base==="ortho"?ortho:osm).addTo(map);
+$("layerBtn").onclick=()=>{ if(base==="osm"){map.removeLayer(osm);ortho.addTo(map);base="ortho";} else {map.removeLayer(ortho);osm.addTo(map);base="osm";} store(KEY+"-base",base); };
 const layer=L.layerGroup().addTo(map);
-function icon(p){const sz=p.prof==="passer"?11:15;
-  return L.divIcon({className:"",html:`<div class="dot" style="width:${sz}px;height:${sz}px;background:${COLOR[p.prof]}"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});}
-function label(p){const pl=PROF.find(x=>x.k===p.prof).l;
-  const parts=[p.mode,p.post,p.inter,p.part,p.age,p.gen].filter(Boolean);
-  return `<b>${pl}</b> · ${parts.join(" · ")}<br>${p.time.slice(11,16)} · ${SESS.find(s=>s.id===p.sess)?.label||p.sess}`;}
-function redraw(){
-  layer.clearLayers();
-  const cur=sessEl.value;
-  pts.filter(p=>p.sess===cur).forEach(p=>{
-    const m=L.marker([p.lat,p.lng],{icon:icon(p),keyboard:false}).addTo(layer);
-    m.bindPopup(()=>{const d=document.createElement("div");d.innerHTML=label(p)+`<br><button type="button">이 점 지우기</button>`;
-      d.querySelector("button").onclick=()=>{pts=pts.filter(x=>x.id!==p.id);save();redraw();toast("지웠습니다")};return d;});
-  });
-  const n=pts.filter(p=>p.sess===cur).length;
-  $("cnt").textContent=`${n}점`;
-}
-redraw();
 
-let last=null;
+/* role memory + repeat detection */
+function allRoles(){const s=new Set();pairs.forEach(p=>{p.a.role&&s.add(p.a.role.trim());p.b.role&&s.add(p.b.role.trim())});pts.forEach(p=>p.role&&s.add(p.role.trim()));return [...s].sort()}
+function fillRoles(){$("roles").innerHTML=allRoles().map(r=>`<option value="${esc(r)}">`).join("")}
+const pairKey=(a,b)=>[norm(a),norm(b)].sort().join(" ⇄ ");
+function pairRepeat(p){const k=pairKey(p.a.role,p.b.role);if(!norm(p.a.role)||!norm(p.b.role))return false;return pairs.some(q=>q.id!==p.id&&q.sess!==p.sess&&pairKey(q.a.role,q.b.role)===k)}
+function roleSeenElsewhere(role,sess){const r=norm(role);if(!r)return false;
+  return pts.some(p=>p.sess!==sess&&norm(p.role)===r)||pairs.some(p=>p.sess!==sess&&(norm(p.a.role)===r||norm(p.b.role)===r))}
+
+/* dwell timers */
+let running=new Set(pts.filter(p=>p.dwell_start&&!p.dwell_s).map(p=>p.id));
+function fmtDur(s){s=Math.max(0,Math.round(s));return `${Math.floor(s/60)}분 ${String(s%60).padStart(2,"0")}초`}
+function updBadge(){$("cnt").textContent=`${pts.filter(p=>p.sess===curSess().id).length}점`+(running.size?` · ⏱${running.size}`:"")}
+
+function icon(p){const sz=p.prof==="passer"?11:15;
+  return L.divIcon({className:"",html:`<div class="dot${running.has(p.id)?" run":""}" style="width:${sz}px;height:${sz}px;background:${COLOR[p.prof]}"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});}
+function ptPopup(p){
+  openPt=p;
+  const d=document.createElement("div"); d.className="pp";
+  const pl=PROF.find(x=>x.k===p.prof).l, parts=[p.mode,p.post,p.inter,p.part,p.age,p.gen].filter(Boolean);
+  const seen=roleSeenElsewhere(p.role,p.sess);
+  let dw="";
+  if(p.prof==="rester"||p.prof==="interagir"||p.prof==="participer"){
+    if(p.dwell_s!=null) dw=`<div>머문 시간: <b>${fmtDur(p.dwell_s)}</b></div><div class="b"><button type="button" class="g" data-a="dreset">다시 재기</button></div>`;
+    else if(p.dwell_start) dw=`<div>재는 중: <b data-live>${fmtDur((Date.now()-p.dwell_start)/1000)}</b></div><div class="b"><button type="button" data-a="dstop">멈춤 · 저장</button><button type="button" class="g" data-a="dcancel">취소</button></div>`;
+    else dw=`<div class="b"><button type="button" data-a="dstart">머문 시간 재기 시작</button></div>`;
+  }
+  d.innerHTML=`<div><b>${pl}</b> · ${esc(parts.join(" · "))}</div><div style="color:#666">${p.time.slice(11,16)} · ${esc(curSess().label)}</div>
+    <input list="roles" placeholder="역할 · 자리 (예: 3번 진열대 상인)" value="${esc(p.role||"")}" data-role>
+    ${seen?`<div><span class="rep">다른 회차에도 나옴</span></div>`:""}
+    ${dw}
+    <div class="b"><button type="button" class="g" data-a="saveRole">역할 저장</button><button type="button" class="x" data-a="del">이 점 지우기</button></div>`;
+  d.addEventListener("click",e=>{const a=e.target.closest("button")?.dataset.a; if(!a) return;
+    if(a==="saveRole"){p.role=d.querySelector("[data-role]").value.trim();savePts();fillRoles();toast("역할을 저장했습니다");map.closePopup();redraw();}
+    if(a==="del"){pts=pts.filter(x=>x.id!==p.id);running.delete(p.id);savePts();map.closePopup();redraw();toast("지웠습니다");}
+    if(a==="dstart"){p.dwell_start=Date.now();delete p.dwell_s;running.add(p.id);p.role=d.querySelector("[data-role]").value.trim()||p.role;savePts();map.closePopup();redraw();toast("시간 재기 시작 · 노란 테두리");lockScreen();}
+    if(a==="dstop"){p.dwell_s=Math.round((Date.now()-p.dwell_start)/1000);running.delete(p.id);savePts();map.closePopup();redraw();toast(`머문 시간 ${fmtDur(p.dwell_s)}`);}
+    if(a==="dcancel"){delete p.dwell_start;running.delete(p.id);savePts();map.closePopup();redraw();}
+    if(a==="dreset"){delete p.dwell_s;delete p.dwell_start;savePts();map.closePopup();redraw();}
+  });
+  return d;
+}
+function pairPopup(p){
+  const d=document.createElement("div"); d.className="pp"; const rep=pairRepeat(p);
+  d.innerHTML=`<div><b>인사 쌍</b> · ${esc(p.kind)} ${rep?'<span class="rep">반복</span>':""}</div><div>${esc(p.a.role||"?")} ⇄ ${esc(p.b.role||"?")}</div><div style="color:#666">${p.time.slice(11,16)}</div>
+    <div class="b"><button type="button" class="x" data-a="del">이 쌍 지우기</button></div>`;
+  d.querySelector("[data-a=del]").onclick=()=>{pairs=pairs.filter(x=>x.id!==p.id);savePairs();map.closePopup();redraw();toast("지웠습니다")};
+  return d;
+}
+function redraw(){
+  layer.clearLayers(); const cur=curSess().id;
+  pairs.filter(p=>p.sess===cur).forEach(p=>{const rep=pairRepeat(p);
+    L.polyline([[p.a.lat,p.a.lng],[p.b.lat,p.b.lng]],{color:"#d0542b",weight:rep?5:3,dashArray:rep?null:"6 5"}).addTo(layer).bindPopup(()=>pairPopup(p));
+    [p.a,p.b].forEach(e=>L.circleMarker([e.lat,e.lng],{radius:6,color:"#fff",weight:2,fillColor:"#d0542b",fillOpacity:1}).addTo(layer).bindPopup(()=>pairPopup(p)));});
+  pts.filter(p=>p.sess===cur).forEach(p=>L.marker([p.lat,p.lng],{icon:icon(p),keyboard:false}).addTo(layer).bindPopup(()=>ptPopup(p)));
+  updBadge();
+}
+fillRoles(); redraw();
+let openPt=null;
+setInterval(()=>{const live=document.querySelector("[data-live]"); if(!live||!openPt||!openPt.dwell_start) return;
+  live.textContent=fmtDur((Date.now()-openPt.dwell_start)/1000);},1000);
+
+/* ---------- tap on map ---------- */
+let pairMode=false, pairA=null, pairTmp=null, pairKindSel="인사만";
 map.on("click",e=>{
-  const s=SESS.find(x=>x.id===sessEl.value);
-  const p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),sess:s.id,street:s.street,time:new Date().toISOString(),
-    lat:+e.latlng.lat.toFixed(7),lng:+e.latlng.lng.toFixed(7),prof:sel.prof};
+  const s=curSess();
+  if(pairMode){
+    if(!pairA){pairA={lat:+e.latlng.lat.toFixed(7),lng:+e.latlng.lng.toFixed(7)};
+      pairTmp=L.circleMarker(e.latlng,{radius:7,color:"#fff",weight:2,fillColor:"#d0542b",fillOpacity:1}).addTo(map);
+      $("bannerTxt").textContent="두 번째 사람 위치를 누르세요"; return;}
+    openPair({lat:+e.latlng.lat.toFixed(7),lng:+e.latlng.lng.toFixed(7)}); return;
+  }
+  const p={id:uid(),sess:s.id,street:s.street,time:new Date().toISOString(),lat:+e.latlng.lat.toFixed(7),lng:+e.latlng.lng.toFixed(7),prof:sel.prof};
   ROWS[sel.prof].forEach(k=>p[k]=sel[k]);
   if(gpsFix){p.gps_lat=+gpsFix.lat.toFixed(6);p.gps_lng=+gpsFix.lng.toFixed(6);p.gps_acc=Math.round(gpsFix.acc);}
-  pts.push(p); save(); redraw(); last=p.id;
-  toast(`${PROF.find(x=>x.k===p.prof).l} 찍음`);
+  pts.push(p); savePts(); redraw(); toast(`${PROF.find(x=>x.k===p.prof).l} 찍음`);
 });
-$("undo").onclick=()=>{ if(!pts.length) return; const cur=sessEl.value;
-  for(let i=pts.length-1;i>=0;i--){ if(pts[i].sess===cur){pts.splice(i,1);break;} } save(); redraw(); toast("마지막 점을 지웠습니다"); };
+$("undo").onclick=()=>{const cur=curSess().id;
+  const lp=[...pts].reverse().find(p=>p.sess===cur), lq=[...pairs].reverse().find(p=>p.sess===cur);
+  if(!lp&&!lq) return;
+  if(lq&&(!lp||lq.time>lp.time)){pairs=pairs.filter(x=>x!==lq);savePairs();toast("마지막 인사 쌍을 지웠습니다");}
+  else{pts=pts.filter(x=>x!==lp);running.delete(lp.id);savePts();toast("마지막 점을 지웠습니다");}
+  redraw();};
 
-/* geolocation */
+/* ---------- greeting pairs ---------- */
+function setPairMode(on){pairMode=on;$("pairBtn").setAttribute("aria-pressed",on);$("banner").hidden=!on;pairA=null;
+  if(pairTmp){map.removeLayer(pairTmp);pairTmp=null} $("bannerTxt").textContent="첫 번째 사람 위치를 누르세요";}
+$("pairBtn").onclick=()=>setPairMode(!pairMode);
+$("pairCancel").onclick=()=>setPairMode(false);
+let pairB=null;
+function renderPairKind(){$("pairKind").innerHTML=OPT.inter.v.map(v=>`<button type="button" class="chip" data-pk="${v}" aria-pressed="${pairKindSel===v}">${v}</button>`).join("")}
+$("pairKind").addEventListener("click",e=>{const b=e.target.closest("[data-pk]");if(!b)return;pairKindSel=b.dataset.pk;renderPairKind()});
+function checkRep(){const a=$("roleA").value,b=$("roleB").value;
+  const k=pairKey(a,b), rep=norm(a)&&norm(b)&&pairs.some(q=>q.sess!==curSess().id&&pairKey(q.a.role,q.b.role)===k);
+  const sa=roleSeenElsewhere(a,curSess().id), sb=roleSeenElsewhere(b,curSess().id);
+  $("pairRep").innerHTML=rep?'<span class="rep">반복</span> 다른 회차에도 같은 두 사람이 인사했습니다':(sa||sb?`다른 회차에도 나온 역할: ${[sa&&esc(a),sb&&esc(b)].filter(Boolean).join(", ")}`:"");}
+$("roleA").addEventListener("input",checkRep); $("roleB").addEventListener("input",checkRep);
+function openPair(b){pairB=b;fillRoles();$("roleA").value="";$("roleB").value="";renderPairKind();checkRep();$("pairModal").hidden=false;setTimeout(()=>$("roleA").focus(),50);}
+$("pairSave").onclick=()=>{const s=curSess();
+  pairs.push({id:uid(),sess:s.id,street:s.street,time:new Date().toISOString(),kind:pairKindSel,
+    a:{...pairA,role:$("roleA").value.trim()},b:{...pairB,role:$("roleB").value.trim()}});
+  savePairs();fillRoles();$("pairModal").hidden=true;
+  if(pairTmp){map.removeLayer(pairTmp);pairTmp=null} pairA=null;pairB=null;$("bannerTxt").textContent="다음 쌍: 첫 번째 사람 위치를 누르세요";
+  redraw();toast("인사 쌍 저장");};
+$("pairDiscard").onclick=()=>{$("pairModal").hidden=true;if(pairTmp){map.removeLayer(pairTmp);pairTmp=null}pairA=null;pairB=null;$("bannerTxt").textContent="첫 번째 사람 위치를 누르세요";};
+
+/* ---------- passer counter + 10 min timer ---------- */
+let minus=false;
+function renderCounter(){const c=M(curSess().id).count;
+  $("cgrid").innerHTML=MODES.map((m,i)=>`<button type="button" class="cb" data-i="${i}"><span class="n">${c[m]||0}</span><span class="l">${m}</span></button>`).join("");
+  $("csum").textContent=MODES.reduce((a,m)=>a+(c[m]||0),0);}
+$("cgrid").addEventListener("click",e=>{const b=e.target.closest(".cb");if(!b)return;const m=MODES[+b.dataset.i];const c=M(curSess().id).count;
+  c[m]=Math.max(0,(c[m]||0)+(minus?-1:1));saveMeta();renderCounter();if(minus){minus=false;$("minusMode").setAttribute("aria-pressed",false);} });
+$("minusMode").onclick=()=>{minus=!minus;$("minusMode").setAttribute("aria-pressed",minus)};
+$("cntBtn").onclick=()=>{const on=$("counter").hidden;$("counter").hidden=!on;$("cntBtn").setAttribute("aria-pressed",on);renderCounter();};
+let tm={iv:null,end:0,left:600};
+function paintT(l){$("tt").textContent=`${Math.floor(Math.max(0,Math.ceil(l))/60)}:${String(Math.max(0,Math.ceil(l))%60).padStart(2,"0")}`;$("tt").classList.toggle("end",l<=0)}
+$("tStart").onclick=()=>{
+  if(tm.iv){clearInterval(tm.iv);tm.iv=null;tm.left=(tm.end-Date.now())/1000;$("tStart").textContent="계속";return;}
+  tm.end=Date.now()+tm.left*1000;$("tStart").textContent="멈춤";lockScreen();
+  const m=M(curSess().id); if(!m.count_start){m.count_start=hm(new Date());saveMeta();}
+  tm.iv=setInterval(()=>{const l=(tm.end-Date.now())/1000;paintT(l);
+    if(l<=0){clearInterval(tm.iv);tm.iv=null;tm.left=0;$("tStart").textContent="끝";try{navigator.vibrate?.([300,150,300])}catch(e){} toast("10분 끝");
+      const m=M(curSess().id); m.count_end=hm(new Date()); saveMeta();}},250);
+};
+$("tReset").onclick=()=>{if(tm.iv)clearInterval(tm.iv);tm={iv:null,end:0,left:600};paintT(600);$("tStart").textContent="시작";};
+
+/* ---------- session info + new session ---------- */
+function sessSummary(id){const c=M(id).count,n=MODES.reduce((a,m)=>a+(c[m]||0),0);
+  const by={};pts.filter(p=>p.sess===id).forEach(p=>by[p.prof]=(by[p.prof]||0)+1);
+  const pr=pairs.filter(p=>p.sess===id), rep=pr.filter(pairRepeat).length;
+  const dw=pts.filter(p=>p.sess===id&&p.dwell_s!=null);
+  return `지나간 사람(세기) ${n}명 · 점: `+PROF.map(p=>`${p.l} ${by[p.k]||0}`).join(", ")+` · 인사 쌍 ${pr.length} (반복 ${rep})`+(dw.length?` · 머문 시간 ${dw.length}명 평균 ${fmtDur(dw.reduce((a,p)=>a+p.dwell_s,0)/dw.length)}`:"");}
+$("infoBtn").onclick=()=>{const s=curSess(),m=M(s.id);$("infoTitle").textContent=s.label;
+  $("mWeather").value=m.weather||"";$("mEvent").value=m.event||"";$("mStart").value=m.start||"";$("mEnd").value=m.end||"";
+  $("infoSum").textContent=sessSummary(s.id);$("nDate").value=today();$("nTime").value=hm(new Date());$("newMsg").textContent="";$("infoModal").hidden=false;};
+$("infoSave").onclick=()=>{const m=M(curSess().id);m.weather=$("mWeather").value.trim();m.event=$("mEvent").value.trim();m.start=$("mStart").value;m.end=$("mEnd").value;saveMeta();$("infoModal").hidden=true;toast("회차 정보를 저장했습니다");};
+$("infoClose").onclick=()=>{$("infoModal").hidden=true};
+$("newSess").onclick=()=>{const d=$("nDate").value||today(),t=$("nTime").value||hm(new Date()),st=$("nStreet").value,c=$("nCond").value.trim();
+  const s={id:"s"+uid(),date:d,t,e:"",street:st,label:`${d.slice(5).replace("-","/")} ${t} ${st}${c?" "+c:""}`};
+  sessions.push(s);saveSess();fillSess(s.id);store(KEY+"-cur",s.id);$("newMsg").textContent=`추가함: ${s.label}`;redraw();renderCounter();};
+
+/* ---------- geolocation + wake lock ---------- */
 let gpsFix=null, me=null, acc=null, centered=false;
-function onPos(pos){
-  const {latitude:lat,longitude:lng,accuracy:a}=pos.coords; gpsFix={lat,lng,acc:a};
-  $("gps").textContent=`GPS ±${Math.round(a)} m`;
+function onPos(pos){const {latitude:lat,longitude:lng,accuracy:a}=pos.coords;gpsFix={lat,lng,acc:a};$("gps").textContent=`GPS ±${Math.round(a)} m`;
   if(!me){me=L.circleMarker([lat,lng],{radius:7,color:"#fff",weight:2,fillColor:"#1a73e8",fillOpacity:1,interactive:false}).addTo(map);
           acc=L.circle([lat,lng],{radius:a,color:"#1a73e8",weight:1,fillOpacity:.08,interactive:false}).addTo(map);}
   else{me.setLatLng([lat,lng]);acc.setLatLng([lat,lng]).setRadius(a);}
-  if(!centered){centered=true;map.setView([lat,lng],19);}
-}
+  if(!centered){centered=true;map.setView([lat,lng],19);}}
 function onErr(err){$("gps").textContent=err.code===1?"위치 권한 꺼짐":"위치를 못 찾음";}
-if("geolocation" in navigator){navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});}
+if("geolocation" in navigator)navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
 else $("gps").textContent="위치 기능 없음";
-$("locBtn").onclick=()=>{ if(gpsFix) map.setView([gpsFix.lat,gpsFix.lng],Math.max(map.getZoom(),19)); else toast("아직 위치를 못 찾았습니다"); };
+$("locBtn").onclick=()=>{if(gpsFix)map.setView([gpsFix.lat,gpsFix.lng],Math.max(map.getZoom(),19));else toast("아직 위치를 못 찾았습니다");};
+let wl=null; async function lockScreen(){try{if(!wl)wl=await navigator.wakeLock?.request("screen");wl&&wl.addEventListener("release",()=>wl=null);}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(tm.iv||running.size))lockScreen();});
+document.addEventListener("click",()=>lockScreen(),{once:true});
 
-/* export */
-const COLS=["id","sess","street","time","lat","lng","prof","mode","post","inter","part","age","gen","gps_lat","gps_lng","gps_acc"];
-function csv(){return "﻿"+COLS.join(",")+"\n"+pts.map(p=>COLS.map(c=>{const v=p[c]??"";return /[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v}).join(",")).join("\n");}
-function geo(){return JSON.stringify({type:"FeatureCollection",features:pts.map(p=>({type:"Feature",geometry:{type:"Point",coordinates:[p.lng,p.lat]},properties:Object.fromEntries(COLS.filter(c=>!["lat","lng"].includes(c)).map(c=>[c,p[c]??null]))}))});}
-async function shareFile(name,type,text){
-  const blob=new Blob([text],{type}); const file=new File([blob],name,{type});
-  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return;} }catch(e){ if(e.name==="AbortError") return; }
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+/* ---------- export ---------- */
+function toCsv(cols,rows){return "﻿"+cols.join(",")+"\n"+rows.map(r=>cols.map(c=>{const v=r[c]??"";return /[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v}).join(",")).join("\n");}
+const PCOLS=["id","sess","street","time","lat","lng","prof","mode","post","inter","part","age","gen","role","role_seen_other_session","dwell_s","gps_lat","gps_lng","gps_acc"];
+const QCOLS=["id","sess","street","time","kind","a_role","a_lat","a_lng","b_role","b_lat","b_lng","repeat"];
+const SCOLS=["id","label","date","planned_start","street","weather","event","start","end","count_start","count_end",...MODES.map(m=>"count_"+m),"count_total"];
+const rowsP=()=>pts.map(p=>({...p,role_seen_other_session:roleSeenElsewhere(p.role,p.sess)?1:0}));
+const rowsQ=()=>pairs.map(p=>({id:p.id,sess:p.sess,street:p.street,time:p.time,kind:p.kind,a_role:p.a.role,a_lat:p.a.lat,a_lng:p.a.lng,b_role:p.b.role,b_lat:p.b.lat,b_lng:p.b.lng,repeat:pairRepeat(p)?1:0}));
+const rowsS=()=>sessions.map(s=>{const m=M(s.id),c=m.count;const r={id:s.id,label:s.label,date:s.date,planned_start:s.t,street:s.street,weather:m.weather,event:m.event,start:m.start,end:m.end,count_start:m.count_start,count_end:m.count_end,count_total:MODES.reduce((a,x)=>a+(c[x]||0),0)};MODES.forEach(x=>r["count_"+x]=c[x]||0);return r});
+function geo(){return JSON.stringify({type:"FeatureCollection",features:[
+  ...rowsP().map(p=>({type:"Feature",geometry:{type:"Point",coordinates:[p.lng,p.lat]},properties:Object.fromEntries(PCOLS.filter(c=>c!=="lat"&&c!=="lng").map(c=>[c,p[c]??null]))})),
+  ...rowsQ().map(q=>({type:"Feature",geometry:{type:"LineString",coordinates:[[q.a_lng,q.a_lat],[q.b_lng,q.b_lat]]},properties:{layer:"greeting_pair",...q}}))]});}
+async function shareFiles(list){
+  const files=list.map(([n,t,txt])=>new File([new Blob([txt],{type:t})],n,{type:t}));
+  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:"terrain 18-11"});return;}}catch(e){if(e.name==="AbortError")return;}
+  for(const f of files){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();await new Promise(r=>setTimeout(r,400));URL.revokeObjectURL(a.href);a.remove();}
 }
-const stamp=()=>"terrain_18-11_"+new Date().toTimeString().slice(0,5).replace(":","h");
-$("shareCsv").onclick=()=>shareFile(stamp()+".csv","text/csv",csv());
-$("shareGeo").onclick=()=>shareFile(stamp()+".geojson","application/geo+json",geo());
-$("copyJson").onclick=async()=>{const t=JSON.stringify(pts);const ar=$("jsonArea");ar.value=t;
+const stamp=()=>"terrain_"+today().slice(5)+"_"+hm(new Date()).replace(":","h");
+$("shareCsv").onclick=()=>shareFiles([[stamp()+"_points.csv","text/csv",toCsv(PCOLS,rowsP())],[stamp()+"_pairs.csv","text/csv",toCsv(QCOLS,rowsQ())],[stamp()+"_sessions.csv","text/csv",toCsv(SCOLS,rowsS())]]);
+$("shareGeo").onclick=()=>shareFiles([[stamp()+".geojson","application/geo+json",geo()]]);
+$("copyJson").onclick=async()=>{const t=JSON.stringify({sessions,meta,points:pts,pairs});const ar=$("jsonArea");ar.value=t;
   try{await navigator.clipboard.writeText(t);toast("복사했습니다");ar.hidden=true;}catch(e){ar.hidden=false;ar.select();toast("아래 글을 길게 눌러 복사하세요");}};
-function summary(){const by={};pts.forEach(p=>{const k=p.sess;by[k]=by[k]||{};by[k][p.prof]=(by[k][p.prof]||0)+1;});
-  return Object.entries(by).map(([k,v])=>`${SESS.find(s=>s.id===k)?.label||k}: `+PROF.map(p=>`${p.l} ${v[p.k]||0}`).join(", ")).join("<br>")||"아직 찍은 점이 없습니다";}
 let armed=false;
-$("menuBtn").onclick=()=>{$("sumTxt").innerHTML=`전체 ${pts.length}점<br>`+summary();$("menu").hidden=false;armed=false;$("clearMsg").textContent="";$("clearBtn").textContent="이 회차 점 모두 지우기";};
+$("menuBtn").onclick=()=>{const used=sessions.filter(s=>pts.some(p=>p.sess===s.id)||pairs.some(p=>p.sess===s.id)||MODES.some(m=>(meta[s.id]?.count||{})[m]));
+  $("sumTxt").innerHTML=`전체 점 ${pts.length} · 인사 쌍 ${pairs.length}<br>`+(used.map(s=>`<b>${esc(s.label)}</b>: ${esc(sessSummary(s.id))}`).join("<br>")||"아직 기록이 없습니다");
+  $("menu").hidden=false;armed=false;$("clearMsg").textContent="";$("clearBtn").textContent="이 회차 기록 모두 지우기";};
 $("closeMenu").onclick=()=>{$("menu").hidden=true};
-$("menu").addEventListener("click",e=>{if(e.target.id==="menu")$("menu").hidden=true});
-$("clearBtn").onclick=()=>{ if(!armed){armed=true;$("clearBtn").textContent="한 번 더 누르면 지웁니다";return;}
-  const cur=sessEl.value; pts=pts.filter(p=>p.sess!==cur); save(); redraw(); armed=false; $("clearBtn").textContent="이 회차 점 모두 지우기"; $("clearMsg").textContent="지웠습니다"; };
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m&&m.id!=="pairModal")m.hidden=true}));
+$("clearBtn").onclick=()=>{if(!armed){armed=true;$("clearBtn").textContent="한 번 더 누르면 지웁니다";return;}
+  const cur=curSess().id;pts=pts.filter(p=>p.sess!==cur);pairs=pairs.filter(p=>p.sess!==cur);if(meta[cur])meta[cur].count={};
+  running=new Set([...running].filter(id=>pts.some(p=>p.id===id)));savePts();savePairs();saveMeta();redraw();renderCounter();armed=false;
+  $("clearBtn").textContent="이 회차 기록 모두 지우기";$("clearMsg").textContent="지웠습니다";};
+renderCounter();
 </script>
 </body>
 </html>
