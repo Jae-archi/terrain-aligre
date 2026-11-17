@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>점찍기 지도 Aligre</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --bg:#f5f6f3; --surface:#ffffff; --fg:#17191a; --muted:#5d6461; --line:#d9ddd8;
+  --passer:#7a8288; --rester:#2f6fb3; --inter:#d0542b; --part:#2f8a4e; --sel:#17191a; --alert:#c43c2f;
+  --f:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121414; --surface:#1c1f1f; --fg:#ecefec; --muted:#a2aaa6; --line:#323736; --sel:#ecefec; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;display:flex;flex-direction:column;overflow:hidden}
+[hidden]{display:none!important}
+.top{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--line);
+  padding:calc(6px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px))}
+.top select{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--bg);color:var(--fg);max-width:58vw}
+.cnt{font-weight:700;font-variant-numeric:tabular-nums}
+.gps{font-size:12px;color:var(--muted)}
+.top .sp{flex:1}
+.ib{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);color:var(--fg)}
+#map{flex:1;min-height:0}
+.sheet{background:var(--surface);border-top:1px solid var(--line);
+  padding:6px max(10px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:5px}
+.r{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;align-items:center}
+.r::-webkit-scrollbar{display:none}
+.lab{font-size:11px;color:var(--muted);min-width:34px;flex:none}
+.chip{flex:none;font:inherit;font-size:14px;border:1.5px solid var(--line);border-radius:999px;padding:6px 11px;background:var(--bg);color:var(--fg);touch-action:manipulation}
+.chip[aria-pressed="true"]{border-color:var(--sel);background:var(--sel);color:var(--bg);font-weight:700}
+.chip.p-passer[aria-pressed="true"]{background:var(--passer);border-color:var(--passer);color:#fff}
+.chip.p-rester[aria-pressed="true"]{background:var(--rester);border-color:var(--rester);color:#fff}
+.chip.p-inter[aria-pressed="true"]{background:var(--inter);border-color:var(--inter);color:#fff}
+.chip.p-part[aria-pressed="true"]{background:var(--part);border-color:var(--part);color:#fff}
+.hint{font-size:12px;color:var(--muted)}
+.actions{display:flex;gap:6px;align-items:center}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:7px 12px;border:1px solid var(--fg);background:var(--fg);color:var(--bg)}
+.btn.g{background:transparent;color:var(--fg);border-color:var(--line)}
+.menu{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:flex;align-items:flex-end}
+.menu .pane{background:var(--surface);color:var(--fg);width:100%;border-radius:14px 14px 0 0;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow:auto}
+.menu h3{margin:0;font-size:16px}
+.menu .row{display:flex;gap:8px;flex-wrap:wrap}
+.menu textarea{width:100%;min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.msg{font-size:13px;color:var(--muted)}
+.danger{border-color:var(--alert);color:var(--alert);background:transparent}
+.dot{border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.leaflet-popup-content{font-family:var(--f);font-size:13px;margin:10px 12px}
+.leaflet-popup-content button{font:inherit;font-size:12px;margin-top:6px;border:1px solid var(--alert);color:var(--alert);background:#fff;border-radius:6px;padding:4px 8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:6px 12px;border-radius:999px;font-size:13px;z-index:1500;pointer-events:none;opacity:0;transition:opacity .2s}
+.toast.on{opacity:.92}
+</style>
+</head>
+<body>
+<div class="top">
+  <select id="sess" aria-label="회차"></select>
+  <span class="cnt" id="cnt">0점</span>
+  <span class="sp"></span>
+  <span class="gps" id="gps">위치 찾는 중</span>
+  <button class="ib" id="locBtn" type="button">◎ 내 위치</button>
+  <button class="ib" id="menuBtn" type="button">≡</button>
+</div>
+<div id="map"></div>
+<div class="sheet">
+  <div class="r" id="rProf"></div>
+  <div class="r" id="rA"></div>
+  <div class="r" id="rB"></div>
+  <div class="r" id="rC"></div>
+  <div class="actions"><span class="hint" id="hint">종류를 고르고 지도를 누르면 점이 찍힙니다</span><span style="flex:1"></span><button class="btn g" id="undo" type="button">되돌리기</button></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="menu" id="menu" hidden>
+  <div class="pane">
+    <h3>내보내기 · 설정</h3>
+    <div class="msg" id="sumTxt"></div>
+    <div class="row">
+      <button class="btn" id="shareCsv" type="button">CSV 공유/저장</button>
+      <button class="btn g" id="shareGeo" type="button">GeoJSON 공유/저장</button>
+      <button class="btn g" id="copyJson" type="button">글자로 복사</button>
+    </div>
+    <textarea id="jsonArea" readonly hidden></textarea>
+    <div class="row">
+      <button class="btn g" id="layerBtn" type="button">배경: 지도 ↔ 항공사진</button>
+      <a class="btn g" href="./" style="text-decoration:none">← 동선 페이지</a>
+    </div>
+    <div class="row"><button class="btn danger" id="clearBtn" type="button">이 회차 점 모두 지우기</button><span class="msg" id="clearMsg"></span></div>
+    <button class="btn g" id="closeMenu" type="button">닫기</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const SESS=[
+ {id:"c1",t:"08:10",e:"08:40",street:"Castelar",label:"08:10 Castelar 등교"},
+ {id:"a1",t:"08:50",e:"09:20",street:"Aligre",label:"08:50 Aligre 시장"},
+ {id:"t1",t:"09:30",e:"10:00",street:"Traversière",label:"09:30 Traversière 오전"},
+ {id:"c2",t:"11:20",e:"11:50",street:"Castelar",label:"11:20 Castelar 하교"},
+ {id:"t2",t:"12:00",e:"12:30",street:"Traversière",label:"12:00 Traversière 점심"},
+ {id:"x",t:"00:00",e:"00:00",street:"기타",label:"기타 회차"}
+];
+const PROF=[{k:"passer",l:"지나감",c:"p-passer"},{k:"rester",l:"머묾",c:"p-rester"},{k:"interagir",l:"상호작용",c:"p-inter"},{k:"participer",l:"참여",c:"p-part"}];
+const OPT={
+  mode:{l:"수단",v:["도보","자전거","킥보드","유모차","기타"]},
+  post:{l:"자세",v:["서기","의자","다른 곳 앉기","눕기"]},
+  inter:{l:"종류",v:["인사만","짧은 대화","긴 대화","같이 놀기"]},
+  age:{l:"나이",v:["0-14","15-24","25-64","65+"]},
+  gen:{l:"성별",v:["여","남","?"]},
+  act:{l:"활동",v:["대화","기다림","먹고 마심","놀이","구경","상거래","기타"]},
+  part:{l:"종류",v:["꾸미기","행사","정리·관리","기타"]}
+};
+const ROWS={passer:["mode","age"],rester:["post","age","gen"],interagir:["inter","age","gen"],participer:["part","age"]};
+const COLOR={passer:"#7a8288",rester:"#2f6fb3",interagir:"#d0542b",participer:"#2f8a4e"};
+const KEY="terrain-map-18-11";
+let pts=[]; try{pts=JSON.parse(localStorage.getItem(KEY)||"[]")||[];}catch(e){pts=[]}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(pts));}catch(e){toast("저장 실패: 브라우저 저장소를 쓸 수 없습니다")}};
+let sel={prof:"rester",mode:"도보",post:"서기",inter:"인사만",age:"25-64",gen:"?",act:null,part:"꾸미기"};
+try{const s=JSON.parse(localStorage.getItem(KEY+"-sel")||"null"); if(s) sel={...sel,...s};}catch(e){}
+const saveSel=()=>{try{localStorage.setItem(KEY+"-sel",JSON.stringify(sel));}catch(e){}};
+const $=id=>document.getElementById(id);
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove("on"),1300)}
+
+/* session select, auto by clock */
+const sessEl=$("sess");
+SESS.forEach(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.label;sessEl.appendChild(o)});
+const mins=s=>{const [h,m]=s.split(":").map(Number);return h*60+m};
+(function pick(){let id=null;try{id=localStorage.getItem(KEY+"-sess")}catch(e){}
+  const d=new Date(),m=d.getHours()*60+d.getMinutes();
+  const now=SESS.find(s=>s.id!=="x"&&m>=mins(s.t)-10&&m<mins(s.e)+5);
+  sessEl.value=now?now.id:(id||"c1");})();
+sessEl.addEventListener("change",()=>{try{localStorage.setItem(KEY+"-sess",sessEl.value)}catch(e){};redraw();});
+
+/* chips */
+function chipRow(el,key){
+  el.innerHTML=`<span class="lab">${OPT[key].l}</span>`+OPT[key].v.map(v=>`<button type="button" class="chip" data-k="${key}" data-v="${v}" aria-pressed="${sel[key]===v}">${v}</button>`).join("");
+}
+function renderChips(){
+  $("rProf").innerHTML=`<span class="lab">프로필</span>`+PROF.map(p=>`<button type="button" class="chip ${p.c}" data-k="prof" data-v="${p.k}" aria-pressed="${sel.prof===p.k}">${p.l}</button>`).join("");
+  const rows=ROWS[sel.prof];
+  [$("rA"),$("rB"),$("rC")].forEach((el,i)=>{ if(rows[i]){el.hidden=false;chipRow(el,rows[i]);} else el.hidden=true; });
+}
+document.querySelector(".sheet").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  const k=b.dataset.k,v=b.dataset.v;
+  sel[k]=(k!=="prof"&&k==="act"&&sel[k]===v)?null:v; saveSel(); renderChips();
+});
+renderChips();
+
+/* map */
+const map=L.map("map",{zoomControl:false,maxZoom:22,tap:true}).setView([48.8487,2.3772],17);
+L.control.zoom({position:"topright"}).addTo(map);
+const osm=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxNativeZoom:19,maxZoom:22,attribution:"© OpenStreetMap"});
+const ortho=L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",{maxNativeZoom:20,maxZoom:22,attribution:"© IGN Géoplateforme"});
+osm.addTo(map); let base="osm";
+$("layerBtn").onclick=()=>{ if(base==="osm"){map.removeLayer(osm);ortho.addTo(map);base="ortho";} else {map.removeLayer(ortho);osm.addTo(map);base="osm";} };
+
+const layer=L.layerGroup().addTo(map);
+function icon(p){const sz=p.prof==="passer"?11:15;
+  return L.divIcon({className:"",html:`<div class="dot" style="width:${sz}px;height:${sz}px;background:${COLOR[p.prof]}"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});}
+function label(p){const pl=PROF.find(x=>x.k===p.prof).l;
+  const parts=[p.mode,p.post,p.inter,p.part,p.age,p.gen].filter(Boolean);
+  return `<b>${pl}</b> · ${parts.join(" · ")}<br>${p.time.slice(11,16)} · ${SESS.find(s=>s.id===p.sess)?.label||p.sess}`;}
+function redraw(){
+  layer.clearLayers();
+  const cur=sessEl.value;
+  pts.filter(p=>p.sess===cur).forEach(p=>{
+    const m=L.marker([p.lat,p.lng],{icon:icon(p),keyboard:false}).addTo(layer);
+    m.bindPopup(()=>{const d=document.createElement("div");d.innerHTML=label(p)+`<br><button type="button">이 점 지우기</button>`;
+      d.querySelector("button").onclick=()=>{pts=pts.filter(x=>x.id!==p.id);save();redraw();toast("지웠습니다")};return d;});
+  });
+  const n=pts.filter(p=>p.sess===cur).length;
+  $("cnt").textContent=`${n}점`;
+}
+redraw();
+
+let last=null;
+map.on("click",e=>{
+  const s=SESS.find(x=>x.id===sessEl.value);
+  const p={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),sess:s.id,street:s.street,time:new Date().toISOString(),
+    lat:+e.latlng.lat.toFixed(7),lng:+e.latlng.lng.toFixed(7),prof:sel.prof};
+  ROWS[sel.prof].forEach(k=>p[k]=sel[k]);
+  if(gpsFix){p.gps_lat=+gpsFix.lat.toFixed(6);p.gps_lng=+gpsFix.lng.toFixed(6);p.gps_acc=Math.round(gpsFix.acc);}
+  pts.push(p); save(); redraw(); last=p.id;
+  toast(`${PROF.find(x=>x.k===p.prof).l} 찍음`);
+});
+$("undo").onclick=()=>{ if(!pts.length) return; const cur=sessEl.value;
+  for(let i=pts.length-1;i>=0;i--){ if(pts[i].sess===cur){pts.splice(i,1);break;} } save(); redraw(); toast("마지막 점을 지웠습니다"); };
+
+/* geolocation */
+let gpsFix=null, me=null, acc=null, centered=false;
+function onPos(pos){
+  const {latitude:lat,longitude:lng,accuracy:a}=pos.coords; gpsFix={lat,lng,acc:a};
+  $("gps").textContent=`GPS ±${Math.round(a)} m`;
+  if(!me){me=L.circleMarker([lat,lng],{radius:7,color:"#fff",weight:2,fillColor:"#1a73e8",fillOpacity:1,interactive:false}).addTo(map);
+          acc=L.circle([lat,lng],{radius:a,color:"#1a73e8",weight:1,fillOpacity:.08,interactive:false}).addTo(map);}
+  else{me.setLatLng([lat,lng]);acc.setLatLng([lat,lng]).setRadius(a);}
+  if(!centered){centered=true;map.setView([lat,lng],19);}
+}
+function onErr(err){$("gps").textContent=err.code===1?"위치 권한 꺼짐":"위치를 못 찾음";}
+if("geolocation" in navigator){navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});}
+else $("gps").textContent="위치 기능 없음";
+$("locBtn").onclick=()=>{ if(gpsFix) map.setView([gpsFix.lat,gpsFix.lng],Math.max(map.getZoom(),19)); else toast("아직 위치를 못 찾았습니다"); };
+
+/* export */
+const COLS=["id","sess","street","time","lat","lng","prof","mode","post","inter","part","age","gen","gps_lat","gps_lng","gps_acc"];
+function csv(){return "﻿"+COLS.join(",")+"\n"+pts.map(p=>COLS.map(c=>{const v=p[c]??"";return /[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v}).join(",")).join("\n");}
+function geo(){return JSON.stringify({type:"FeatureCollection",features:pts.map(p=>({type:"Feature",geometry:{type:"Point",coordinates:[p.lng,p.lat]},properties:Object.fromEntries(COLS.filter(c=>!["lat","lng"].includes(c)).map(c=>[c,p[c]??null]))}))});}
+async function shareFile(name,type,text){
+  const blob=new Blob([text],{type}); const file=new File([blob],name,{type});
+  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return;} }catch(e){ if(e.name==="AbortError") return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+const stamp=()=>"terrain_18-11_"+new Date().toTimeString().slice(0,5).replace(":","h");
+$("shareCsv").onclick=()=>shareFile(stamp()+".csv","text/csv",csv());
+$("shareGeo").onclick=()=>shareFile(stamp()+".geojson","application/geo+json",geo());
+$("copyJson").onclick=async()=>{const t=JSON.stringify(pts);const ar=$("jsonArea");ar.value=t;
+  try{await navigator.clipboard.writeText(t);toast("복사했습니다");ar.hidden=true;}catch(e){ar.hidden=false;ar.select();toast("아래 글을 길게 눌러 복사하세요");}};
+function summary(){const by={};pts.forEach(p=>{const k=p.sess;by[k]=by[k]||{};by[k][p.prof]=(by[k][p.prof]||0)+1;});
+  return Object.entries(by).map(([k,v])=>`${SESS.find(s=>s.id===k)?.label||k}: `+PROF.map(p=>`${p.l} ${v[p.k]||0}`).join(", ")).join("<br>")||"아직 찍은 점이 없습니다";}
+let armed=false;
+$("menuBtn").onclick=()=>{$("sumTxt").innerHTML=`전체 ${pts.length}점<br>`+summary();$("menu").hidden=false;armed=false;$("clearMsg").textContent="";$("clearBtn").textContent="이 회차 점 모두 지우기";};
+$("closeMenu").onclick=()=>{$("menu").hidden=true};
+$("menu").addEventListener("click",e=>{if(e.target.id==="menu")$("menu").hidden=true});
+$("clearBtn").onclick=()=>{ if(!armed){armed=true;$("clearBtn").textContent="한 번 더 누르면 지웁니다";return;}
+  const cur=sessEl.value; pts=pts.filter(p=>p.sess!==cur); save(); redraw(); armed=false; $("clearBtn").textContent="이 회차 점 모두 지우기"; $("clearMsg").textContent="지웠습니다"; };
+</script>
+</body>
+</html>
