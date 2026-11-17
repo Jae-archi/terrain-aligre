@@ -198,7 +198,7 @@ function resetTimer(id){if(tm.id===id&&tm.iv){clearInterval(tm.iv);tm.iv=null;} 
 /* highlight the current slot */
 function markNow(){
   const d=new Date(), m=d.getHours()*60+d.getMinutes();
-  document.getElementById("clock").textContent=`지금 ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`+(m>=780?" · 출발 시간":m>=770?" · 정리할 시간":"");
+  document.getElementById("clock").textContent=`지금 ${d.getHours()}:${String(d.getMinutes()).padStart(2,"0")}`+(m>=780&&m<810?" · 출발 시간":m>=770&&m<780?" · 정리할 시간":"");
   let opened=false;
   for(const s of S){const c=document.getElementById("card-"+s.id); if(!c) continue;
     const on=m>=min(s.t)&&m<min(s.e); c.classList.toggle("now",on); c.querySelector("[data-now]").hidden=!on;
