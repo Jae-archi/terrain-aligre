@@ -93,11 +93,11 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;di
     <span class="cnt" id="cnt">0점</span>
   </div>
   <div class="tr">
-    <button class="ib" id="locBtn" type="button">◎ 위치</button>
+    <button class="ib" id="locBtn" type="button">◎ <span id="gps">위치…</span></button>
+    <button class="ib" id="spotBtn" type="button">서는 곳</button>
     <button class="ib cn" id="cntBtn" type="button" aria-pressed="false">세기</button>
     <button class="ib" id="pairBtn" type="button" aria-pressed="false">인사 쌍</button>
-    <span class="gps" id="gps">위치 찾는 중</span>
-    <button class="ib" id="menuBtn" type="button">≡</button>
+    <span style="flex:1"></span><button class="ib" id="menuBtn" type="button">≡</button>
   </div>
 </div>
 <div class="mapwrap">
@@ -237,6 +237,43 @@ const ortho=L.tileLayer("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile
 let base=load(KEY+"-base","osm"); (base==="ortho"?ortho:osm).addTo(map);
 $("layerBtn").onclick=()=>{ if(base==="osm"){map.removeLayer(osm);ortho.addTo(map);base="ortho";} else {map.removeLayer(ortho);osm.addTo(map);base="osm";} store(KEY+"-base",base); };
 const layer=L.layerGroup().addTo(map);
+
+/* ---------- where to stand: zone, counting line, observer spot ---------- */
+/* stretches from OpenStreetMap (ways 8914787, 58448899+946577834/5, 8915879); widths are estimates, check on site */
+const STREETS={
+  "Castelar":{a:[48.8490058,2.3764625],b:[48.8488869,2.3772722],w:5.5,side:1,
+    from:"rue Charles-Baudelaire",to:"rue de Cotte",
+    tip:"짧고 좁은 구간(약 60 m)이라 한 자리에서 전체가 보입니다. 북쪽 벽에 붙어 서세요. 학교 정문 위치는 현장에서 확인해 '참여' 점이나 회차 정보에 적어 주세요."},
+  "Traversière":{a:[48.8491608,2.3747732],b:[48.8480115,2.3738165],w:6.5,side:1,
+    from:"rue de Charenton",to:"avenue Daumesnil",
+    tip:"구간 한가운데 벽 쪽. 보도 없이 한 바닥으로 포장된 거리라 벽에 붙어 서야 지나가는 사람을 막지 않습니다. 테라스가 잘 보이는 쪽이면 반대편 벽으로 옮겨도 됩니다."},
+  "Aligre":{a:[48.8477149,2.3770797],b:[48.8486885,2.3778871],w:6.5,side:-1,
+    from:"rue de Charenton",to:"place d'Aligre",
+    tip:"시장 진열대 구간 한가운데. 진열대 뒤 상점 쪽 벽에 서면 손님 흐름을 막지 않고 양쪽 진열대가 보입니다. 시장이 붐비면 세는 선만 지키고 몇 미터 옮겨도 됩니다."}
+};
+const mLat=111320, mLng=111320*Math.cos(48.849*Math.PI/180);
+function off(p,dx,dy){return [p[0]+dy/mLat,p[1]+dx/mLng]}
+function geom(s){const dx=(s.b[1]-s.a[1])*mLng, dy=(s.b[0]-s.a[0])*mLat, L0=Math.hypot(dx,dy), ux=dx/L0, uy=dy/L0, nx=-uy, ny=ux;
+  const mid=[(s.a[0]+s.b[0])/2,(s.a[1]+s.b[1])/2];
+  return {len:L0,
+    zone:[off(s.a,nx*s.w,ny*s.w),off(s.b,nx*s.w,ny*s.w),off(s.b,-nx*s.w,-ny*s.w),off(s.a,-nx*s.w,-ny*s.w)],
+    line:[off(mid,nx*(s.w+1),ny*(s.w+1)),off(mid,-nx*(s.w+1),-ny*(s.w+1))],
+    spot:off(mid,ux*6+nx*s.side*(s.w-1.2),uy*6+ny*s.side*(s.w-1.2))};}
+const guide=L.layerGroup().addTo(map);
+const spotIcon=L.divIcon({className:"",html:'<div style="display:flex;flex-direction:column;align-items:center"><div style="background:#17191a;color:#fff;font:700 12px var(--f);padding:3px 7px;border-radius:6px;white-space:nowrap">여기 서기</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid #17191a"></div><div style="width:14px;height:14px;border-radius:50%;background:#f2b400;border:3px solid #17191a;margin-top:-1px"></div></div>',iconSize:[80,44],iconAnchor:[40,41]});
+function drawGuide(){guide.clearLayers(); const cur=curSess().street;
+  Object.entries(STREETS).forEach(([name,s])=>{const g=geom(s),on=name===cur;
+    L.polygon(g.zone,{color:"#17191a",weight:on?2:1,dashArray:"4 4",fillColor:"#f2b400",fillOpacity:on?.10:.04,interactive:false}).addTo(guide);
+    L.polyline(g.line,{color:"#c43c2f",weight:on?4:2,opacity:on?1:.5,interactive:false}).addTo(guide);
+    if(on){L.marker(g.spot,{icon:spotIcon,zIndexOffset:-100}).addTo(guide).bindPopup(`<div class="pp"><b>${name}: 여기 서기</b>
+      <div>관찰 구역: ${s.from} → ${s.to} (약 ${Math.round(g.len)} m, 노란 띠)</div>
+      <div><span style="color:#c43c2f;font-weight:700">빨간 선</span> = 지나가는 사람 세는 선. 이 선을 넘는 사람만 셉니다.</div>
+      <div>${s.tip}</div><div style="color:#666">구역 폭은 지도에서 어림한 값입니다.</div></div>`);}
+  });}
+drawGuide();
+$("sess").addEventListener("change",drawGuide);
+$("spotBtn").onclick=()=>{const s=STREETS[curSess().street]; if(!s){toast("이 회차는 거리가 정해지지 않았습니다");return;}
+  const g=geom(s); map.setView(g.spot,19); setTimeout(()=>guide.eachLayer(l=>l.openPopup&&l.getPopup&&l.getPopup()&&l.openPopup()),350);};
 
 /* role memory + repeat detection */
 function allRoles(){const s=new Set();pairs.forEach(p=>{p.a.role&&s.add(p.a.role.trim());p.b.role&&s.add(p.b.role.trim())});pts.forEach(p=>p.role&&s.add(p.role.trim()));return [...s].sort()}
@@ -381,12 +418,12 @@ $("newSess").onclick=()=>{const d=$("nDate").value||today(),t=$("nTime").value||
 
 /* ---------- geolocation + wake lock ---------- */
 let gpsFix=null, me=null, acc=null, centered=false;
-function onPos(pos){const {latitude:lat,longitude:lng,accuracy:a}=pos.coords;gpsFix={lat,lng,acc:a};$("gps").textContent=`GPS ±${Math.round(a)} m`;
+function onPos(pos){const {latitude:lat,longitude:lng,accuracy:a}=pos.coords;gpsFix={lat,lng,acc:a};$("gps").textContent=`±${Math.round(a)}m`;
   if(!me){me=L.circleMarker([lat,lng],{radius:7,color:"#fff",weight:2,fillColor:"#1a73e8",fillOpacity:1,interactive:false}).addTo(map);
           acc=L.circle([lat,lng],{radius:a,color:"#1a73e8",weight:1,fillOpacity:.08,interactive:false}).addTo(map);}
   else{me.setLatLng([lat,lng]);acc.setLatLng([lat,lng]).setRadius(a);}
   if(!centered){centered=true;map.setView([lat,lng],19);}}
-function onErr(err){$("gps").textContent=err.code===1?"위치 권한 꺼짐":"위치를 못 찾음";}
+function onErr(err){$("gps").textContent=err.code===1?"권한 꺼짐":"못 찾음";}
 if("geolocation" in navigator)navigator.geolocation.watchPosition(onPos,onErr,{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
 else $("gps").textContent="위치 기능 없음";
 $("locBtn").onclick=()=>{if(gpsFix)map.setView([gpsFix.lat,gpsFix.lng],Math.max(map.getZoom(),19));else toast("아직 위치를 못 찾았습니다");};
