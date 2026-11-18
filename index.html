@@ -78,7 +78,7 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--alig);outline
 <main>
   <div class="head">
     <h1>현장 관찰 · 11월 18일 (수)</h1>
-    <div class="deadline"><span>8:10 시작</span><span>12:50 정리</span><span><b>13:00 출발</b> (14:00 수업)</span></div>
+    <div class="deadline"><span>11:00 시작</span><span>12:50 정리</span><span><b>13:00 출발</b> (14:00 수업)</span></div>
     <div class="clock" id="clock">지금 —</div>
   </div>
   <a href="map.html" style="display:block;text-align:center;text-decoration:none;font-weight:800;font-size:17px;padding:12px;border-radius:12px;background:var(--alig);color:#fff">지도에 점찍기 열기 →</a>
@@ -103,8 +103,8 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--alig);outline
   <h2>챙길 것</h2>
   <div class="box">
     <ul class="pack">
-      <li>점찍기 시트 (현장_점찍기시트_전체거리_v02_한국어) 5–6장</li>
-      <li>상인 질문지 v02 4–5부</li>
+      <li>점찍기 시트 (현장_점찍기시트_전체거리_v02_한국어) 3–4장</li>
+      <li>상인 질문지 v02 2부</li>
       <li>클립보드, 펜 두 색</li>
       <li>휴대폰: 얼굴이 안 나오는 사진만, 영상은 찍지 않기</li>
     </ul>
@@ -128,13 +128,10 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--alig);outline
 
 <script>
 const S=[
- {id:"c1",t:"08:10",e:"08:40",st:"cast",tag:"Castelar",kind:"관찰 1",what:"등교 · 학교 있음",note:"정문 앞 부모 무리: 위치 점찍기, 누가 누구에게 인사하는지 <strong>역할로만</strong> (예: \"정문 왼쪽 부모 3명\"). 수업 시간 표지판 사진.",obs:true},
- {id:"a1",t:"08:50",e:"09:20",st:"alig",tag:"Aligre",kind:"관찰 2",what:"시장 열림 (오전)",note:"진열대 상인과 손님 사이 인사, 테라스. 진열대는 번호나 위치로 적기. zone de rencontre 표지판 사진.",obs:true},
- {id:"t1",t:"09:30",e:"10:00",st:"trav",tag:"Traversière",kind:"관찰 3",what:"오전",note:"지나가는 사람과 이동수단. 남겨 둔 화분, 의자 같은 전유 흔적 사진.",obs:true},
- {id:"q1",t:"10:00",e:"10:40",st:"q",tag:"Traversière",kind:"질문지",what:"상인 1–2곳 (한산한 시간)",note:"카페나 빵집처럼 길에 면한 가게. 시작 문장을 읽고 5분.",obs:false},
- {id:"q2",t:"10:45",e:"11:15",st:"q",tag:"Aligre",kind:"질문지",what:"Mamalee (13 rue d'Aligre) + 상인 1곳",note:"Mamalee가 아직 안 열었으면 <strong>영업시간을 사진으로</strong> 찍고 다른 상점에서 받기. 마감 중인 진열대도 괜찮음.",obs:false},
- {id:"c2",t:"11:20",e:"11:50",st:"cast",tag:"Castelar",kind:"관찰 4",what:"수요일 정오 하교 (11:30 전후)",note:"★ 아침에 본 부모 무리가 <strong>다시 보이는지</strong>, 같은 쌍이 다시 인사하는지 → 반복 인사 (H5).",obs:true},
- {id:"t2",t:"12:00",e:"12:30",st:"trav",tag:"Traversière",kind:"관찰 5",what:"점심 테라스",note:"테라스에 머문 사람 점찍기, 5명 골라 머문 시간 재기. 시간이 모자라면 이 회차는 빼도 됨.",obs:true}
+ {id:"a1",t:"11:00",e:"11:20",st:"alig",tag:"Aligre",kind:"관찰 1",what:"시장 (오전 끝무렵)",note:"진열대 상인과 손님 사이 인사, 테라스. 진열대는 번호나 위치로 적기. zone de rencontre 표지판 사진. 20분만 있으니 <strong>지나가는 사람 10분 + 점찍기</strong>를 먼저.",obs:true},
+ {id:"c2",t:"11:25",e:"11:50",st:"cast",tag:"Castelar",kind:"관찰 2",what:"수요일 정오 하교 (11:30 전후)",note:"정문 앞 부모 무리: 위치 점찍기, 누가 누구에게 인사하는지 <strong>역할로만</strong> (예: \"정문 왼쪽 부모 3명\"). 오늘은 아침 등교를 못 보니, 같은 무리가 다시 오는지는 <strong>다음 회차</strong>와 비교 (H5). 수업 시간 표지판 사진.",obs:true},
+ {id:"t2",t:"11:55",e:"12:25",st:"trav",tag:"Traversière",kind:"관찰 3",what:"점심 테라스",note:"테라스에 머문 사람 점찍기, 5명 골라 머문 시간 재기. 남겨 둔 화분, 의자 같은 전유 흔적 사진.",obs:true},
+ {id:"q2",t:"12:25",e:"12:45",st:"q",tag:"Aligre / Traversière",kind:"질문지",what:"상인 1곳 (짧게)",note:"점심 시간이라 바쁜 가게는 피하기. 마감 중인 시장 진열대가 좋음. Mamalee (13 rue d'Aligre)는 붐비면 <strong>영업시간만 사진으로</strong> 찍고 다음에 다시.",obs:false}
 ];
 const MODES=["도보","자전거","킥보드","유모차","기타"];
 const KEY="terrain-18-11";
