@@ -97,6 +97,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;di
     <button class="ib" id="spotBtn" type="button">서는 곳</button>
     <button class="ib cn" id="cntBtn" type="button" aria-pressed="false">세기</button>
     <button class="ib" id="pairBtn" type="button" aria-pressed="false">인사 쌍</button>
+    <button class="ib" id="spdBtn" type="button">속도</button>
     <span style="flex:1"></span><button class="ib" id="menuBtn" type="button">≡</button>
   </div>
 </div>
@@ -135,14 +136,26 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;di
   <h3 id="infoTitle">회차 정보</h3>
   <div class="row"><label>날씨 · 기온<input id="mWeather" placeholder="맑음 8°C"></label></div>
   <div class="row"><label>특별한 일 (시장, 하교, 공사, 행사)<textarea id="mEvent"></textarea></label></div>
+  <div class="row"><label>가판대 (Aligre)<select id="mStall"><option value=""></option><option>장 섬</option><option>정리 중</option><option>없음</option></select></label><label>밝기<select id="mLight"><option value=""></option><option>낮</option><option>해 질 녘</option><option>어두움</option></select></label></div>
   <div class="row"><label>실제 시작<input id="mStart" type="time"></label><label>실제 끝<input id="mEnd" type="time"></label></div>
+  <div class="msg">순서: ① 세기 10분 → ② 점찍기 (머묾·상호작용, 「등 뒤」 고르기) → ③ 걷는 속도 10명</div>
   <div class="msg" id="infoSum"></div>
   <div class="row"><button class="btn" id="infoSave" type="button">저장</button><button class="btn g" id="infoClose" type="button">닫기</button></div>
   <hr style="border:0;border-top:1px solid var(--line);width:100%">
   <h3>새 회차 만들기</h3>
   <div class="row"><label>날짜<input id="nDate" type="date"></label><label>시작<input id="nTime" type="time"></label></div>
-  <div class="row"><label>거리<select id="nStreet"><option>Castelar</option><option>Aligre</option><option>Traversière</option></select></label><label>조건<input id="nCond" placeholder="학교 없음, 시장 없음…"></label></div>
+  <div class="row"><label>거리<select id="nStreet"><option>Ch.-Baudelaire</option><option>Castelar</option><option>Aligre</option><option>Traversière</option></select></label><label>조건<input id="nCond" placeholder="학교 없음, 시장 없음…"></label></div>
   <div class="row"><button class="btn" id="newSess" type="button">새 회차 추가</button><span class="msg" id="newMsg"></span></div>
+</div></div>
+
+<!-- walking speed -->
+<div class="modal" id="spdModal" hidden><div class="pane">
+  <h3>걷는 속도</h3>
+  <div class="msg">바닥에 두 표시(가로등, 건물 번호 등)를 정하고 그 사이 거리를 적습니다. 지나가는 사람이 첫 표시를 넘을 때 한 번, 두 번째 표시를 넘을 때 한 번 누르세요. 한 회차에 10명.</div>
+  <div class="row"><label>두 표시 사이 (m)<input id="spdDist" type="number" inputmode="decimal" value="10" min="2" max="50"></label><label>수단<select id="spdMode"><option>도보</option><option>유모차</option><option>자전거</option><option>킥보드</option></select></label></div>
+  <button class="btn" id="spdTap" type="button" style="font-size:22px;padding:22px">첫 표시 넘음</button>
+  <div class="msg" id="spdList"></div>
+  <div class="row"><button class="btn g" id="spdUndo" type="button">마지막 지우기</button><button class="btn g" id="spdClose" type="button">닫기</button></div>
 </div></div>
 
 <!-- menu -->
@@ -151,7 +164,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;di
   <div class="legend"><span><i style="background:#7a8288"></i>지나감</span><span><i style="background:#2f6fb3"></i>머묾</span><span><i style="background:#d0542b"></i>상호작용·인사 쌍</span><span><i style="background:#2f8a4e"></i>참여</span><span><i style="background:#f2b400"></i>시간 재는 중</span></div>
   <div class="msg" id="sumTxt"></div>
   <div class="row">
-    <button class="btn" id="shareCsv" type="button">CSV 3개 공유/저장</button>
+    <button class="btn" id="shareCsv" type="button">CSV 4개 공유/저장</button>
     <button class="btn g" id="shareGeo" type="button">GeoJSON</button>
     <button class="btn g" id="copyJson" type="button">글자로 복사</button>
   </div>
@@ -170,25 +183,30 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:14px;di
 const DEF_SESS=[
  {id:"a1",date:"2026-11-18",t:"11:00",e:"11:20",street:"Aligre",label:"11/18 11:00 Aligre 시장"},
 {id:"c2",date:"2026-11-18",t:"11:25",e:"11:50",street:"Castelar",label:"11/18 11:25 Castelar 하교"},
-{id:"t2",date:"2026-11-18",t:"11:55",e:"12:25",street:"Traversière",label:"11/18 11:55 Traversière 점심"}
+{id:"t2",date:"2026-11-18",t:"11:55",e:"12:25",street:"Traversière",label:"11/18 11:55 Traversière 점심"},
+{id:"d1",date:"2026-11-22",t:"14:00",e:"14:20",street:"Ch.-Baudelaire",label:"11/22 일 14:00 Ch.-Baudelaire 학교 없음"},
+{id:"d2",date:"2026-11-22",t:"14:25",e:"14:45",street:"Traversière",label:"11/22 일 14:25 Traversière 주말"},
+{id:"d3",date:"2026-11-22",t:"14:50",e:"15:10",street:"Aligre",label:"11/22 일 14:50 Aligre 장 끝난 뒤"}
 ];
 const PROF=[{k:"passer",l:"지나감",c:"p-passer"},{k:"rester",l:"머묾",c:"p-rester"},{k:"interagir",l:"상호작용",c:"p-inter"},{k:"participer",l:"참여",c:"p-part"}];
 const OPT={
   mode:{l:"수단",v:["도보","자전거","킥보드","유모차","기타"]},
-  post:{l:"자세",v:["서기","의자","다른 곳 앉기","눕기"]},
+  post:{l:"자세",v:["서기","구경","의자","다른 곳 앉기","눕기"]},
+  back:{l:"등 뒤",v:["벽","열린 파사드","가판대","없음(길 가운데)"]},
   inter:{l:"종류",v:["인사만","짧은 대화","긴 대화","같이 놀기"]},
-  age:{l:"나이",v:["0-14","15-24","25-64","65+"]},
+  age:{l:"나이",v:["?","0-14","15-24","25-64","65+"]},
   gen:{l:"성별",v:["여","남","?"]},
   part:{l:"종류",v:["꾸미기","행사","정리·관리","기타"]}
 };
-const ROWS={passer:["mode","age"],rester:["post","age","gen"],interagir:["inter","age","gen"],participer:["part","age"]};
+const ROWS={passer:["mode","age"],rester:["post","back","age"],interagir:["inter","back","age"],participer:["part","age"]};
 const COLOR={passer:"#7a8288",rester:"#2f6fb3",interagir:"#d0542b",participer:"#2f8a4e"};
 const MODES=OPT.mode.v;
 const KEY="terrain-map-18-11";
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k)||"null");return v==null?d:v}catch(e){return d}}
 function store(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){toast("저장 실패: 브라우저 저장소를 쓸 수 없습니다");return false}}
 let pts=load(KEY,[]), pairs=load(KEY+"-pairs",[]), sessions=load(KEY+"-sessions",null)||DEF_SESS.slice(), meta=load(KEY+"-meta",{});
-let sel={prof:"rester",mode:"도보",post:"서기",inter:"인사만",age:"25-64",gen:"?",part:"꾸미기",...load(KEY+"-sel",{})};
+DEF_SESS.forEach(d=>{if(!sessions.some(s=>s.id===d.id))sessions.push(d)});
+let sel={prof:"rester",mode:"도보",post:"서기",inter:"인사만",gen:"?",part:"꾸미기",...load(KEY+"-sel",{}),back:"벽",age:"?"};
 const savePts=()=>store(KEY,pts), savePairs=()=>store(KEY+"-pairs",pairs), saveSess=()=>store(KEY+"-sessions",sessions), saveMeta=()=>store(KEY+"-meta",meta), saveSel=()=>store(KEY+"-sel",sel);
 const $=id=>document.getElementById(id);
 function toast(t){const el=$("toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove("on"),1400)}
@@ -239,15 +257,18 @@ const layer=L.layerGroup().addTo(map);
 /* ---------- where to stand: zone, counting line, observer spot ---------- */
 /* stretches from OpenStreetMap (ways 8914787, 58448899+946577834/5, 8915879); widths are estimates, check on site */
 const STREETS={
+  "Ch.-Baudelaire":{a:[48.849741,2.376987],b:[48.849025,2.37648],w:5.6,side:1,
+    from:"rue Théophile-Roussel",to:"rue Émilio Castelar",
+    tip:"학교 입구 앞 구간(폭 약 11 m, 11/20과 같은 자리). 길 가운데에 서서 지나가는 사람을 셉니다. 아이들이 길 가운데에 있는지 벽에 붙는지 「등 뒤」로 기록하세요."},
   "Castelar":{a:[48.8490058,2.3764625],b:[48.8488869,2.3772722],w:5.5,side:1,
     from:"rue Charles-Baudelaire",to:"rue de Cotte",
     tip:"짧고 좁은 구간(약 60 m)이라 한 자리에서 전체가 보입니다. 북쪽 벽에 붙어 서세요. 학교 정문 위치는 현장에서 확인해 '참여' 점이나 회차 정보에 적어 주세요."},
-  "Traversière":{a:[48.8491608,2.3747732],b:[48.8480115,2.3738165],w:6.5,side:1,
+  "Traversière":{a:[48.8491608,2.3747732],b:[48.8480115,2.3738165],w:5.45,side:1,
     from:"rue de Charenton",to:"avenue Daumesnil",
     tip:"구간 한가운데 벽 쪽. 보도 없이 한 바닥으로 포장된 거리라 벽에 붙어 서야 지나가는 사람을 막지 않습니다. 테라스가 잘 보이는 쪽이면 반대편 벽으로 옮겨도 됩니다."},
-  "Aligre":{a:[48.8477149,2.3770797],b:[48.8486885,2.3778871],w:6.5,side:-1,
-    from:"rue de Charenton",to:"place d'Aligre",
-    tip:"시장 진열대 구간 한가운데. 진열대 뒤 상점 쪽 벽에 서면 손님 흐름을 막지 않고 양쪽 진열대가 보입니다. 시장이 붐비면 세는 선만 지키고 몇 미터 옮겨도 됩니다."}
+  "Aligre":{a:[48.849171,2.378277],b:[48.850125,2.379066],w:6.75,side:-1,
+    from:"place d'Aligre",to:"rue Crozatier",
+    tip:"place 북쪽 구간(15–26번지 앞, 11/18·11/20과 같은 자리, 폭 약 13.5 m). 가판대가 남아 있는지 회차 정보의 「가판대」에 꼭 고르세요."}
 };
 const mLat=111320, mLng=111320*Math.cos(48.849*Math.PI/180);
 function off(p,dx,dy){return [p[0]+dy/mLat,p[1]+dx/mLng]}
@@ -291,7 +312,7 @@ function icon(p){const sz=p.prof==="passer"?11:15;
 function ptPopup(p){
   openPt=p;
   const d=document.createElement("div"); d.className="pp";
-  const pl=PROF.find(x=>x.k===p.prof).l, parts=[p.mode,p.post,p.inter,p.part,p.age,p.gen].filter(Boolean);
+  const pl=PROF.find(x=>x.k===p.prof).l, parts=[p.mode,p.post,p.back,p.inter,p.part,p.age].filter(Boolean);
   const seen=roleSeenElsewhere(p.role,p.sess);
   let dw="";
   if(p.prof==="rester"||p.prof==="interagir"||p.prof==="participer"){
@@ -399,16 +420,29 @@ $("tStart").onclick=()=>{
 };
 $("tReset").onclick=()=>{if(tm.iv)clearInterval(tm.iv);tm={iv:null,end:0,left:600};paintT(600);$("tStart").textContent="시작";};
 
+/* ---------- walking speed ---------- */
+let spdT0=null;
+function spdRender(){const sp=M(curSess().id).speeds||[];
+  $("spdList").innerHTML=sp.length?`${sp.length}명 · 평균 <b>${(sp.reduce((a,x)=>a+x.ms,0)/sp.length).toFixed(2)} m/s</b><br>`+sp.map((x,i)=>`${i+1}. ${x.mode} ${x.s.toFixed(1)}초 → ${x.ms.toFixed(2)} m/s`).join("<br>"):"아직 잰 사람이 없습니다";
+  $("spdTap").textContent=spdT0?"두 번째 표시 넘음":"첫 표시 넘음";}
+$("spdBtn").onclick=()=>{spdT0=null;spdRender();$("spdModal").hidden=false;lockScreen();};
+$("spdClose").onclick=()=>{$("spdModal").hidden=true;spdT0=null;};
+$("spdTap").onclick=()=>{if(!spdT0){spdT0=performance.now();spdRender();return;}
+  const sec=(performance.now()-spdT0)/1000,d=parseFloat($("spdDist").value)||10;spdT0=null;
+  if(sec<1){toast("너무 짧습니다, 다시");spdRender();return;}
+  const m=M(curSess().id);(m.speeds=m.speeds||[]).push({time:new Date().toISOString(),dist:d,s:Math.round(sec*10)/10,ms:Math.round(d/sec*100)/100,mode:$("spdMode").value});saveMeta();spdRender();toast(`${(d/sec).toFixed(2)} m/s`);};
+$("spdUndo").onclick=()=>{const m=M(curSess().id);(m.speeds||[]).pop();saveMeta();spdRender();};
+
 /* ---------- session info + new session ---------- */
 function sessSummary(id){const c=M(id).count,n=MODES.reduce((a,m)=>a+(c[m]||0),0);
   const by={};pts.filter(p=>p.sess===id).forEach(p=>by[p.prof]=(by[p.prof]||0)+1);
   const pr=pairs.filter(p=>p.sess===id), rep=pr.filter(pairRepeat).length;
-  const dw=pts.filter(p=>p.sess===id&&p.dwell_s!=null);
-  return `지나간 사람(세기) ${n}명 · 점: `+PROF.map(p=>`${p.l} ${by[p.k]||0}`).join(", ")+` · 인사 쌍 ${pr.length} (반복 ${rep})`+(dw.length?` · 머문 시간 ${dw.length}명 평균 ${fmtDur(dw.reduce((a,p)=>a+p.dwell_s,0)/dw.length)}`:"");}
+  const dw=pts.filter(p=>p.sess===id&&p.dwell_s!=null), sp=M(id).speeds||[];
+  return (sp.length?`속도 ${sp.length}명 평균 ${(sp.reduce((a,x)=>a+x.ms,0)/sp.length).toFixed(2)} m/s · `:"")+`지나간 사람(세기) ${n}명 · 점: `+PROF.map(p=>`${p.l} ${by[p.k]||0}`).join(", ")+` · 인사 쌍 ${pr.length} (반복 ${rep})`+(sp.length?` · 속도 ${sp.length}명 평균 ${(sp.reduce((a,x)=>a+x.ms,0)/sp.length).toFixed(2)} m/s`:"")+(dw.length?` · 머문 시간 ${dw.length}명 평균 ${fmtDur(dw.reduce((a,p)=>a+p.dwell_s,0)/dw.length)}`:"");}
 $("infoBtn").onclick=()=>{const s=curSess(),m=M(s.id);$("infoTitle").textContent=s.label;
-  $("mWeather").value=m.weather||"";$("mEvent").value=m.event||"";$("mStart").value=m.start||"";$("mEnd").value=m.end||"";
+  $("mWeather").value=m.weather||"";$("mStall").value=m.stall||"";$("mLight").value=m.light||"";$("mEvent").value=m.event||"";$("mStart").value=m.start||"";$("mEnd").value=m.end||"";
   $("infoSum").textContent=sessSummary(s.id);$("nDate").value=today();$("nTime").value=hm(new Date());$("newMsg").textContent="";$("infoModal").hidden=false;};
-$("infoSave").onclick=()=>{const m=M(curSess().id);m.weather=$("mWeather").value.trim();m.event=$("mEvent").value.trim();m.start=$("mStart").value;m.end=$("mEnd").value;saveMeta();$("infoModal").hidden=true;toast("회차 정보를 저장했습니다");};
+$("infoSave").onclick=()=>{const m=M(curSess().id);m.weather=$("mWeather").value.trim();m.stall=$("mStall").value;m.light=$("mLight").value;m.event=$("mEvent").value.trim();m.start=$("mStart").value;m.end=$("mEnd").value;saveMeta();$("infoModal").hidden=true;toast("회차 정보를 저장했습니다");};
 $("infoClose").onclick=()=>{$("infoModal").hidden=true};
 $("newSess").onclick=()=>{const d=$("nDate").value||today(),t=$("nTime").value||hm(new Date()),st=$("nStreet").value,c=$("nCond").value.trim();
   const s={id:"s"+uid(),date:d,t,e:"",street:st,label:`${d.slice(5).replace("-","/")} ${t} ${st}${c?" "+c:""}`};
@@ -431,12 +465,12 @@ document.addEventListener("click",()=>lockScreen(),{once:true});
 
 /* ---------- export ---------- */
 function toCsv(cols,rows){return "﻿"+cols.join(",")+"\n"+rows.map(r=>cols.map(c=>{const v=r[c]??"";return /[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v}).join(",")).join("\n");}
-const PCOLS=["id","sess","street","time","lat","lng","prof","mode","post","inter","part","age","gen","role","role_seen_other_session","dwell_s","gps_lat","gps_lng","gps_acc"];
+const PCOLS=["id","sess","street","time","lat","lng","prof","mode","post","back","inter","part","age","gen","role","role_seen_other_session","dwell_s","gps_lat","gps_lng","gps_acc"];
 const QCOLS=["id","sess","street","time","kind","a_role","a_lat","a_lng","b_role","b_lat","b_lng","repeat"];
-const SCOLS=["id","label","date","planned_start","street","weather","event","start","end","count_start","count_end",...MODES.map(m=>"count_"+m),"count_total"];
+const SCOLS=["id","label","date","planned_start","street","weather","event","stall","light","start","end","count_start","count_end",...MODES.map(m=>"count_"+m),"count_total"];
 const rowsP=()=>pts.map(p=>({...p,role_seen_other_session:roleSeenElsewhere(p.role,p.sess)?1:0}));
 const rowsQ=()=>pairs.map(p=>({id:p.id,sess:p.sess,street:p.street,time:p.time,kind:p.kind,a_role:p.a.role,a_lat:p.a.lat,a_lng:p.a.lng,b_role:p.b.role,b_lat:p.b.lat,b_lng:p.b.lng,repeat:pairRepeat(p)?1:0}));
-const rowsS=()=>sessions.map(s=>{const m=M(s.id),c=m.count;const r={id:s.id,label:s.label,date:s.date,planned_start:s.t,street:s.street,weather:m.weather,event:m.event,start:m.start,end:m.end,count_start:m.count_start,count_end:m.count_end,count_total:MODES.reduce((a,x)=>a+(c[x]||0),0)};MODES.forEach(x=>r["count_"+x]=c[x]||0);return r});
+const rowsS=()=>sessions.map(s=>{const m=M(s.id),c=m.count;const r={id:s.id,label:s.label,date:s.date,planned_start:s.t,street:s.street,weather:m.weather,event:m.event,stall:m.stall,light:m.light,start:m.start,end:m.end,count_start:m.count_start,count_end:m.count_end,count_total:MODES.reduce((a,x)=>a+(c[x]||0),0)};MODES.forEach(x=>r["count_"+x]=c[x]||0);return r});
 function geo(){return JSON.stringify({type:"FeatureCollection",features:[
   ...rowsP().map(p=>({type:"Feature",geometry:{type:"Point",coordinates:[p.lng,p.lat]},properties:Object.fromEntries(PCOLS.filter(c=>c!=="lat"&&c!=="lng").map(c=>[c,p[c]??null]))})),
   ...rowsQ().map(q=>({type:"Feature",geometry:{type:"LineString",coordinates:[[q.a_lng,q.a_lat],[q.b_lng,q.b_lat]]},properties:{layer:"greeting_pair",...q}}))]});}
@@ -446,7 +480,9 @@ async function shareFiles(list){
   for(const f of files){const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();await new Promise(r=>setTimeout(r,400));URL.revokeObjectURL(a.href);a.remove();}
 }
 const stamp=()=>"terrain_"+today().slice(5)+"_"+hm(new Date()).replace(":","h");
-$("shareCsv").onclick=()=>shareFiles([[stamp()+"_points.csv","text/csv",toCsv(PCOLS,rowsP())],[stamp()+"_pairs.csv","text/csv",toCsv(QCOLS,rowsQ())],[stamp()+"_sessions.csv","text/csv",toCsv(SCOLS,rowsS())]]);
+const VCOLS=["sess","street","time","dist_m","seconds","m_per_s","mode"];
+const rowsV=()=>sessions.flatMap(s=>(M(s.id).speeds||[]).map(x=>({sess:s.id,street:s.street,time:x.time,dist_m:x.dist,seconds:x.s,m_per_s:x.ms,mode:x.mode})));
+$("shareCsv").onclick=()=>shareFiles([[stamp()+"_speeds.csv","text/csv",toCsv(VCOLS,rowsV())],[stamp()+"_points.csv","text/csv",toCsv(PCOLS,rowsP())],[stamp()+"_pairs.csv","text/csv",toCsv(QCOLS,rowsQ())],[stamp()+"_sessions.csv","text/csv",toCsv(SCOLS,rowsS())]]);
 $("shareGeo").onclick=()=>shareFiles([[stamp()+".geojson","application/geo+json",geo()]]);
 $("copyJson").onclick=async()=>{const t=JSON.stringify({sessions,meta,points:pts,pairs});const ar=$("jsonArea");ar.value=t;
   try{await navigator.clipboard.writeText(t);toast("복사했습니다");ar.hidden=true;}catch(e){ar.hidden=false;ar.select();toast("아래 글을 길게 눌러 복사하세요");}};
